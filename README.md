@@ -5,6 +5,8 @@ ITS web applications (e.g. [Tabula](https://github.com/UniversityofWarwick/tabul
 
 ## Getting started
 
+Copy _conf/application.conf.example_ to _conf/application.conf_ and edit the cookie attributes as appropriate.
+
 This application ships with Docker support. To build, tag and run a local container image, perform the following steps:
 
 ```
@@ -21,7 +23,7 @@ $ ./run.sh
 ```
 
 <details>
-<summary>Sytem requirements</summary>
+<summary>System requirements</summary>
 Pre-requisites: working NPM and node (LTS is fine)
 
 Supported platforms: macOS, Linux

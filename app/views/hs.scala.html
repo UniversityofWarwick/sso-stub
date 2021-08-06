@@ -10,12 +10,13 @@
         @context.csrfHelper.formField
         <div class="form-group">
             <label for="who">
-                Who do you want to be?            </label>
-            <select id="who" name="uid" class="form-control">
+                Who do you want to be?
+            </label>
+            <select id="who" name="uniId" class="form-control">
                 @for(grp <- members.groupBy(m => m.department.name).toSeq.sortBy((a) => a._1)) {
                     <optgroup label="@grp._1">
                     @for(member <- grp._2) {
-                        <option value="@member.universityId">@member.givenName @member.familyName, @member.universityId, @member.warwickTargetGroup</option>
+                        <option value="@member.universityId">@member.givenName @member.familyName, @member.universityId (@member.userCode), @member.warwickTargetGroup</option>
                     }
                     </optgroup>
                 }

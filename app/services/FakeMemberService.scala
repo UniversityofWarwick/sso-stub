@@ -37,7 +37,7 @@ class FakeMemberServiceImpl extends FakeMemberService {
         ))
       })
     })
-    mappedDepts.flatten.map(t => t._2).toSeq
+    mappedDepts.flatten.map(t => t._2).toSeq ++ SandboxData.PredictableMembers
   }
 
   override def getResponseFor(member: Member): MemberAuthorityResponse = MemberAuthorityResponse(

@@ -18,6 +18,7 @@ POST        /origin/slogin                          @controllers.IndexController
 POST        /origin/aa                              @controllers.IndexController.respondToAa()
 GET         /origin/sentry                          @controllers.IndexController.respondToSentry(requestType: Int, user: Option[String])
 POST        /origin/sentry                          @controllers.IndexController.respondToSentry(requestType: Int, user: Option[String])
+GET         /origin/logout                          @controllers.IndexController.logout(target)
 
 ## Fallbacks ##
 
