@@ -1,0 +1,10 @@
+@(users: Seq[Map[String, String]] = Seq.empty)
+<users>
+    @users.map { user =>
+        <user>
+            @user.map { case (key, value) =>
+                <attribute name="@key" value="@value"/>
+            }
+        </user>
+    }
+</users>

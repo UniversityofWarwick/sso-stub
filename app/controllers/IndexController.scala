@@ -2,6 +2,7 @@ package controllers
 
 import com.sun.org.apache.xml.internal.security.signature.XMLSignature
 import domain.{AttributeConverter, Member}
+import helpers.FormDataHelpers._
 import org.apache.xml.security.c14n.Canonicalizer
 import org.opensaml._
 import org.w3c.dom.Element
@@ -144,14 +145,17 @@ class IndexController @Inject()(
   }
 
   def respondToSentry(requestType: Int, user: Option[String]): Action[AnyContent] = Action { implicit request =>
-    val formData = request.body.asFormUrlEncoded
+    val formData: Option[FormData] = request.body.asFormUrlEncoded
 
     requestType match {
-      case 1 if request.method == "POST" && formData.get("token").nonEmpty =>
-        sentryLookup("1", _.universityId == formData.get("token").head)
+      case 1 if request.method == "POST" && formData.has("token") =>
+        sentryLookup("1", _.universityId == formData.getString("token"))
 
-      case 2 if request.method == "POST" && formData.get("user").nonEmpty && formData.get("pass").nonEmpty =>
-        sentryLookup("2", _.userCode == formData.get("user").head)
+      case 2 if request.method == "POST" && formData.has("user") && formData.has("pass") =>
+        sentryLookup("2", _.userCode == formData.getString("user"))
+
+      case 4 if request.method == "POST" && formData.has("user") =>
+        sentryLookup("4", _.userCode == formData.getString("user"))
 
       case 4 if user.nonEmpty =>
         sentryLookup("4", _.userCode == user.get)
