@@ -147,6 +147,12 @@ object SandboxData {
     ), 5600001, 5600030)
   )
 
+  final val IDG = Department("An Information and Digital Group", "IN", "", Map.empty, Map.empty, 5900001, 5900020)
+  final val PredictableMembers = Seq(
+    BasicMember("functest_admin", "WarwickADS", IDG, "Functest", "Admin", true, "no-reply@warwick.ac.uk", "University staff", "5900001"),
+    BasicMember("functest_contributor", "WarwickADS", IDG, "Functest", "Contributor", true, "no-reply@warwick.ac.uk", "University staff", "5900002")
+  )
+
   def randomName(id: Long, gender: domain.Gender): Name = {
     val nameGender = gender match {
       case domain.Gender.Male => male

@@ -93,9 +93,29 @@ object WarwickItsClass {
 }
 
 object AttributeConverter {
+  def isStaff(r: MemberAuthorityResponse): Boolean = r.itsClass == WarwickItsClass.Staff || r.itsClass == WarwickItsClass.PGR
+  def isStudent(r: MemberAuthorityResponse): Boolean = r.itsClass != WarwickItsClass.Staff && r.itsClass != WarwickItsClass.PGR
+
+  def toUserSearchAttributes(r: MemberAuthorityResponse): Map[String, String] = Map(
+    "mail" -> r.mail,
+    "student" -> isStudent(r).toString,
+    "ou" -> r.department.name,
+    "givenname" -> r.givenName,
+    "warwickdeptcode" -> r.department.code,
+    "staff" -> isStaff(r).toString,
+    "cn" -> r.userCode,
+    "deptshort" -> r.department.name,
+    "warwickuniid" -> r.universityId,
+    "passwordexpired" -> "false",
+    "warwickprimary" -> "true",
+    "sn" -> r.familyName,
+    "logindisabled" -> "false",
+    "department" -> r.department.name,
+    "urn:websignon:usertype" -> r.memberEduTypeAffiliation.toString,
+    "warwicktargetgroup" -> r.warwickTargetGroup
+  )
+
   def toAttributes(r: MemberAuthorityResponse, oldMode: Boolean): Map[String, String] = {
-    val isStaff = (r.itsClass == WarwickItsClass.Staff || r.itsClass == WarwickItsClass.PGR)
-    val isStudent = (r.itsClass != WarwickItsClass.Staff && r.itsClass != WarwickItsClass.PGR)
 
     val attribs = Map[String, String](
       (if (oldMode) "email" else "mail") -> r.mail,
@@ -108,8 +128,8 @@ object AttributeConverter {
       (if (oldMode) "dept" else "ou") -> r.department.name,
       "deptshort" -> r.department.name,
       "urn:websignon:usersource" -> r.userSource,
-      "staff" -> isStaff.toString,
-      "student" -> isStudent.toString,
+      "staff" -> isStaff(r).toString,
+      "student" -> isStudent(r).toString,
       (if (oldMode) "id" else "warwickuniid") -> r.universityId,
       (if (oldMode) "deptCode" else "warwickdeptcode") -> r.department.code,
       "warwickprimary" -> (if (r.warwickPrimary) "Yes" else "No"),
@@ -121,10 +141,10 @@ object AttributeConverter {
     )
 
     if (oldMode)
-      attribs + ("name" -> (r.givenName + " " + r.familyName), "member" -> (isStaff || isStudent).toString)
+      attribs + ("name" -> (r.givenName + " " + r.familyName), "member" -> (isStaff(r) || isStudent(r)).toString)
     else {
       // We can assume everyone is either staff of student
-      val dn = s"CN=${r.userCode},OU=${if (isStaff) "Staff" else "Student"},OU=CU,OU=WARWICK,DC=ads,DC=warwick,DC=ac,DC=uk"
+      val dn = s"CN=${r.userCode},OU=${if (isStaff(r)) "Staff" else "Student"},OU=CU,OU=WARWICK,DC=ads,DC=warwick,DC=ac,DC=uk"
       attribs + ("cn" -> r.userCode, "dn" -> dn)
     }
   }

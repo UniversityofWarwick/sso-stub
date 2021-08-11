@@ -1,0 +1,18 @@
+include "defaults"
+
+play {
+  http.secret.key = "changeme"
+  filters.disabled += play.filters.hosts.AllowedHostsFilter
+}
+
+app {
+  domain = "localhost"
+  webgroup.prefix="in-"${app.name.id}"-local-dev-"
+
+  cookies {
+    path = "/"
+    secure = false
+    httpOnly = true
+    sameSite = "Lax"
+  }
+}

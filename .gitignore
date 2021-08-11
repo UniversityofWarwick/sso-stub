@@ -1,6 +1,7 @@
 /conf/functional-test.conf
 /conf/ehcache.properties
 /conf/*secret*
+/conf/application.conf
 /conf/worker.conf
 /logs
 /classes

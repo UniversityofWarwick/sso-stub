@@ -10,6 +10,7 @@ GET         /assets/*file                           @controllers.Assets.versione
 GET         /service/gtg                            @controllers.ServiceCheckController.gtg
 GET         /service/healthcheck                    @warwick.healthcheck.InjectedHealthcheckController.index
 
+# Stubbed endpoints
 GET         /                                       @controllers.IndexController.home
 GET         /origin/hs                              @controllers.IndexController.hs(shire, providerId, target)
 POST        /origin/hs                              @controllers.IndexController.generateAcs(shire, providerId, target)
@@ -18,6 +19,10 @@ POST        /origin/slogin                          @controllers.IndexController
 POST        /origin/aa                              @controllers.IndexController.respondToAa()
 GET         /origin/sentry                          @controllers.IndexController.respondToSentry(requestType: Int, user: Option[String])
 POST        /origin/sentry                          @controllers.IndexController.respondToSentry(requestType: Int, user: Option[String])
+GET         /origin/logout                          @controllers.IndexController.logout(target)
+
+GET         /origin/api/userSearch.htm              @controllers.UserLookupController.userSearch()
+POST        /origin/api/userSearch.htm              @controllers.UserLookupController.userSearch()
 
 ## Fallbacks ##
 

@@ -1,34 +1,41 @@
 package controllers
 
-import java.time.Instant
-import java.util.{Collections, Date}
-
 import com.sun.org.apache.xml.internal.security.signature.XMLSignature
-import domain.{AttributeConverter, MemberAuthorityResponse, MemberEduTypeAffiliation, WarwickItsClass}
-import javax.inject.{Inject, Singleton}
+import domain.{AttributeConverter, Member}
+import helpers.FormDataHelpers._
 import org.apache.xml.security.c14n.Canonicalizer
-import org.opensaml.{XML, _}
-import org.w3c.dom.{Document, Element}
+import org.opensaml._
+import org.w3c.dom.Element
+import play.api.Configuration
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.mvc.{Action, AnyContent, Cookie}
+import play.api.mvc.{Action, AnyContent, Cookie, DiscardingCookie}
 import services.FakeMemberService
 import sun.security.tools.keytool.CertAndKeyGen
 import sun.security.x509.X500Name
 
+import java.util.{Collections, Date}
+import javax.inject.{Inject, Singleton}
 import scala.collection.JavaConverters._
 import scala.language.postfixOps
-
-import domain.Member
+import scala.xml.NodeSeq
 
 @Singleton
-class IndexController extends BaseController {
+class IndexController @Inject()(
+  config: Configuration
+) extends BaseController {
 
   val DEFAULT_QNAME_NAMESPACE = "urn:mace:shibboleth:1.0"
   val DEFAULT_QNAME_TYPE = "AttributeValueType"
 
   @Inject
   private[this] var fakeMemberService: FakeMemberService = _
+
+  private val domain = config.getOptional[String]("app.domain")
+  private val path = config.getOptional[String]("app.cookies.path").getOrElse("/")
+  private val secure = config.getOptional[Boolean]("app.cookies.secure").getOrElse(false)
+  private val httpOnly = config.getOptional[Boolean]("app.cookies.httpOnly").getOrElse(true)
+  private val sameSite = Cookie.SameSite.parse(config.getOptional[String]("app.cookies.sameSite").getOrElse(""))
 
   def home: Action[AnyContent] = Action { implicit request =>
     Ok(views.html.home(fakeMemberService.getStaff, fakeMemberService.getStudents))
@@ -38,21 +45,21 @@ class IndexController extends BaseController {
     Redirect(s"/${path.replaceFirst("^/", "")}", status)
   }
 
-  def hs(shire: String, providerId: String, target: String) = Action { implicit request =>
-    Ok(views.html.hs(shire, providerId, target, (fakeMemberService.getStaff++fakeMemberService.getStudents)))
+  def hs(shire: String, providerId: String, target: String): Action[AnyContent] = Action { implicit request =>
+    Ok(views.html.hs(shire, providerId, target, fakeMemberService.getStaff ++ fakeMemberService.getStudents))
   }
 
   val issuerId: String = "urn:mace:eduserv.org.uk:athens:provider:warwick.ac.uk"
 
   // TODO: Use form case class here
-  def generateAcs(shire: String, providerId: String, target: String) = Action { implicit request =>
+  def generateAcs(shire: String, providerId: String, target: String): Action[AnyContent] = Action { implicit request =>
     val userData = chosenUserForm.bindFromRequest.get
-    val nameID = new SAMLNameIdentifier(userData.uid, "", "urn:websignon:uuid")
+    val nameID = new SAMLNameIdentifier(userData.uniId, "", "urn:websignon:uuid")
     val response = SAMLPOSTProfile.prepare(shire, issuerId, Seq(providerId).asJava, nameID, request.ipAddress, "urn:oasis:names:tc:SAML:1.0:am:unspecified", new Date, null)
     Ok(views.html.acsPost(encode(response), shire, target))
   }
 
-  def encode(samlResponse: SAMLResponse) = {
+  private def encode(samlResponse: SAMLResponse) = {
     val certGen = new CertAndKeyGen("RSA", "SHA256WithRSA", null)
     certGen.generate(1024)
     val cert = certGen.getSelfCertificate(
@@ -62,28 +69,28 @@ class IndexController extends BaseController {
     new String(base64, "ASCII")
   }
 
-  def slogin(providerId: String, target: String) = Action { implicit request =>
-    Ok(views.html.slogin(providerId, target, (fakeMemberService.getStaff++fakeMemberService.getStudents)))
+  def slogin(providerId: String, target: String): Action[AnyContent] = Action { implicit request =>
+    Ok(views.html.slogin(providerId, target, fakeMemberService.getStaff ++ fakeMemberService.getStudents))
   }
 
-  def performOldMode(providerId: String, target: String) = Action { implicit request =>
+  def performOldMode(providerId: String, target: String): Action[AnyContent] = Action { implicit request =>
     val userData = chosenUserForm.bindFromRequest.get
-    Redirect(target).withCookies(Cookie("WarwickSSO", userData.uid))
+    Redirect(target).withCookies(Cookie(name = "WarwickSSO", value = userData.uniId, domain = domain, path = path, secure = secure, httpOnly = httpOnly, sameSite = sameSite))
   }
 
-  case class ChosenUser(uid: String)
+  case class ChosenUser(uniId: String)
 
   val chosenUserForm: Form[ChosenUser] = Form(
     mapping(
-      "uid" -> text
+      "uniId" -> text
     )(ChosenUser.apply)(ChosenUser.unapply)
   )
 
-  def respondToAa() = Action(parse.xml) { request =>
+  def respondToAa(): Action[NodeSeq] = Action(parse.xml) { request =>
     val name = (request.body \\ "Envelope" \\ "Body" \\ "Request" \\ "AttributeQuery" \\ "Subject" \\ "NameIdentifier" headOption).map(_.text)
     val providerId = (request.body \\ "Envelope" \\ "Body" \\ "Request" \\ "AttributeQuery" \\ "@Resource" headOption).map(_.text)
     val reqId = (request.body \\ "Envelope" \\ "Body" \\ "Request" \\ "@RequestID" headOption).map(_.text)
-    val member = (fakeMemberService.getStaff++fakeMemberService.getStudents).filter(m => m.universityId == name.get).head
+    val member = (fakeMemberService.getStaff ++ fakeMemberService.getStudents).filter(m => m.universityId == name.get).head
 
     val attributes: Seq[SAMLAttribute] = AttributeConverter.toAttributes(fakeMemberService.getResponseFor(member), oldMode = false).toList map {
       case (name: String, value: String) =>
@@ -123,9 +130,9 @@ class IndexController extends BaseController {
     Ok(scala.xml.XML.loadString(new String(canonicalizer.canonicalizeSubtree(soapEnvelope))))
   }
 
-  def sentryLookup(requestType: String, memberFilter: Member => Boolean) = {
+  private def sentryLookup(requestType: String, memberFilter: Member => Boolean) = {
     // wtf, Adam
-    val members = (fakeMemberService.getStaff++fakeMemberService.getStudents).filter(memberFilter)
+    val members = (fakeMemberService.getStaff ++ fakeMemberService.getStudents).filter(memberFilter)
 
     if(members.isEmpty) {
       Ok("returnType=5" + requestType)
@@ -137,20 +144,29 @@ class IndexController extends BaseController {
     }
   }
 
-  def respondToSentry(requestType: Int, user: Option[String]) = Action { implicit request =>
-    val formData = request.body.asFormUrlEncoded;
-    
-    requestType match {
-      case 1 if request.method == "POST" && formData.get("token").nonEmpty =>
-        sentryLookup("1", _.universityId == formData.get("token").head)
+  def respondToSentry(requestType: Int, user: Option[String]): Action[AnyContent] = Action { implicit request =>
+    val formData: Option[FormData] = request.body.asFormUrlEncoded
 
-      case 2 if request.method == "POST" && formData.get("user").nonEmpty && formData.get("pass").nonEmpty =>
-        sentryLookup("2", _.userCode == formData.get("user").head)
+    requestType match {
+      case 1 if request.method == "POST" && formData.has("token") =>
+        sentryLookup("1", _.universityId == formData.getString("token"))
+
+      case 2 if request.method == "POST" && formData.has("user") && formData.has("pass") =>
+        sentryLookup("2", _.userCode == formData.getString("user"))
+
+      case 4 if request.method == "POST" && formData.has("user") =>
+        sentryLookup("4", _.userCode == formData.getString("user"))
 
       case 4 if user.nonEmpty =>
         sentryLookup("4", _.userCode == user.get)
 
       case _ => BadRequest
     }
+  }
+
+  def logout(target: String): Action[AnyContent] = Action { implicit request =>
+    val ssoCookieCandidateNames = Seq("WarwickSSO", "SSO-LTC") ++ request.cookies.collect { case c if c.name.contains("SSO-SSC") => c.name }
+    val ssoCookieCandidates = ssoCookieCandidateNames.map(name => DiscardingCookie(name = name, domain = domain, path = path, secure = secure))
+    Redirect(target).discardingCookies(ssoCookieCandidates: _*)
   }
 }
