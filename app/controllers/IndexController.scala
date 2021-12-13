@@ -16,7 +16,7 @@ import sun.security.x509.X500Name
 
 import java.util.{Collections, Date}
 import javax.inject.{Inject, Singleton}
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.language.postfixOps
 import scala.xml.NodeSeq
 
@@ -53,7 +53,7 @@ class IndexController @Inject()(
 
   // TODO: Use form case class here
   def generateAcs(shire: String, providerId: String, target: String): Action[AnyContent] = Action { implicit request =>
-    val userData = chosenUserForm.bindFromRequest.get
+    val userData = chosenUserForm.bindFromRequest().get
     val nameID = new SAMLNameIdentifier(userData.uniId, "", "urn:websignon:uuid")
     val response = SAMLPOSTProfile.prepare(shire, issuerId, Seq(providerId).asJava, nameID, request.ipAddress, "urn:oasis:names:tc:SAML:1.0:am:unspecified", new Date, null)
     Ok(views.html.acsPost(encode(response), shire, target))
@@ -74,7 +74,7 @@ class IndexController @Inject()(
   }
 
   def performOldMode(providerId: String, target: String): Action[AnyContent] = Action { implicit request =>
-    val userData = chosenUserForm.bindFromRequest.get
+    val userData = chosenUserForm.bindFromRequest().get
     Redirect(target).withCookies(Cookie(name = "WarwickSSO", value = userData.uniId, domain = domain, path = path, secure = secure, httpOnly = httpOnly, sameSite = sameSite))
   }
 

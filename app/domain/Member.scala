@@ -141,11 +141,17 @@ object AttributeConverter {
     )
 
     if (oldMode)
-      attribs + ("name" -> (r.givenName + " " + r.familyName), "member" -> (isStaff(r) || isStudent(r)).toString)
+      attribs ++ Map(
+        "name" -> (r.givenName + " " + r.familyName), 
+        "member" -> (isStaff(r) || isStudent(r)).toString()
+      )
     else {
       // We can assume everyone is either staff of student
       val dn = s"CN=${r.userCode},OU=${if (isStaff(r)) "Staff" else "Student"},OU=CU,OU=WARWICK,DC=ads,DC=warwick,DC=ac,DC=uk"
-      attribs + ("cn" -> r.userCode, "dn" -> dn)
+      attribs ++ Map(
+        "cn" -> r.userCode, 
+        "dn" -> dn
+      )
     }
   }
 }
