@@ -3,7 +3,7 @@ import warwick.Changes
 
 ThisBuild / organization := "uk.ac.warwick"
 ThisBuild / version := "1.0-SNAPSHOT"
-ThisBuild / scalaVersion := "2.12.0"
+ThisBuild / scalaVersion := "2.13.7"
 
 ThisBuild / javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
 ThisBuild / scalacOptions ++= Seq(
@@ -14,10 +14,9 @@ ThisBuild / scalacOptions ++= Seq(
   "-unchecked",
   "-Ywarn-numeric-widen",
   "-Xfatal-warnings",
-  "-Xsource:2.12"
+  "-Xsource:2.13",
+  "-Yrangepos"
 )
-ThisBuild / scalacOptions in Test ++= Seq("-Yrangepos")
-ThisBuild / scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings")
 ThisBuild / webpackEnabled := true
 
 autoAPIMappings := true
@@ -29,7 +28,7 @@ lazy val root = (project in file("."))
   .enablePlugins(WarwickProject, PlayScala)
   .settings(
     name := """sso-stub""",
-    packageZipTarball in Universal := (packageZipTarball in Universal).dependsOn(webpack).value,
+    Universal / packageZipTarball := (Universal / packageZipTarball).dependsOn(webpack).value,
     libraryDependencies ++= (appDeps ++ testDeps).map(excludeBadTransitiveDeps),
     Test / javaOptions += "-Dlogger.resource=test-logging.xml",
     PlayKeys.devSettings := Seq("play.server.http.port" -> "8090"),
@@ -92,7 +91,6 @@ val appDeps = Seq(
   "net.codingwell" %% "scala-guice" % "4.2.6",
   "com.google.inject.extensions" % "guice-multibindings" % "4.2.2",
   "com.adrianhurt" %% "play-bootstrap" % "1.5-P27-B3",
-  "log4j" % "log4j" % "1.2.17",
   "xalan" % "xalan" % "2.7.2",
   "xfire" % "opensaml" % "1.0.1",
   "xerces" % "xercesImpl" % "2.11.0",
@@ -143,12 +141,9 @@ def excludeBadTransitiveDeps(mod: ModuleID): ModuleID = mod.excludeAll(
 )
 
 // Make built output available as Play assets.
-unmanagedResourceDirectories in Assets += baseDirectory.value / "target/assets"
+Assets / unmanagedResourceDirectories  += baseDirectory.value / "target/assets"
 
-resolvers += ("Local Maven Repository" at "file:///" + Path.userHome.absolutePath + "/.m2/repository")
-resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
-resolvers += "oauth" at "http://oauth.googlecode.com/svn/code/maven"
-resolvers += "softprops-maven" at "http://dl.bintray.com/content/softprops/maven"
+resolvers += Resolver.mavenLocal
 resolvers += "slack-client" at "https://mvnrepository.com/artifact/net.gpedro.integrations.slack/slack-webhook"
 resolvers += "SBT plugins" at "https://repo.scala-sbt.org/scalasbt/sbt-plugin-releases/"
 resolvers += "nexus" at "https://mvn.elab.warwick.ac.uk/nexus/repository/public-anonymous/"
@@ -159,7 +154,7 @@ lazy val bambooTest = taskKey[Unit]("Run tests for CI")
 
 bambooTest := {
   // Capture the test result
-  val testResult = (test in Test).result.value
+  val testResult = (Test / test).result.value
 }
 
 // Webpack task

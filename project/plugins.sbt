@@ -6,7 +6,7 @@ addSbtPlugin("uk.ac.warwick" % "play-warwick" % "0.16")
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.7.3")
 
 // https://github.com/playframework/twirl/pull/238 should be included in official 1.4.3 or 1.5.0 onwards
-addSbtPlugin("com.typesafe.sbt" % "sbt-twirl" % "1.4.3-warwick")
+addSbtPlugin("com.typesafe.sbt" % "sbt-twirl" % "1.5.1")
 
 // .tgz generator
 addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.3.25")

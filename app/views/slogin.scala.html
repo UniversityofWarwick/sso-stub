@@ -6,7 +6,7 @@
     <p>The redirect URL is <samp>@target</samp></p>
 
     <form action="" method="post">
-        @context.csrfHelper.formField
+        @context.csrfHelper.formField()
         <div class="form-group">
             <label for="who">
                 Who do you want to be?
