@@ -123,32 +123,57 @@ class IndexController extends BaseController {
     Ok(scala.xml.XML.loadString(new String(canonicalizer.canonicalizeSubtree(soapEnvelope))))
   }
 
-  def sentryLookup(requestType: String, memberFilter: Member => Boolean) = {
-    // wtf, Adam
+  def sentryLookup(requestType: String, memberFilter: Member => Boolean, multiple: Boolean = false) = {
     val members = (fakeMemberService.getStaff++fakeMemberService.getStudents).filter(memberFilter)
-
-    if(members.isEmpty) {
+    if (members.isEmpty) {
       Ok("returnType=5" + requestType)
-    }
-    else {
-      val response = fakeMemberService.getResponseFor(members.head)
-      val attributes = AttributeConverter.toAttributes(response, oldMode = true)
-      Ok("returnType=" + requestType + "\nid=" + members.head.universityId + "\n" + attributes.map(_.productIterator.mkString("=")).mkString("\n"))
+    } else {
+      val separator = "\n---- separator ----\n"
+      val membersToReturn = if (multiple) members else members.take(1)
+      val body: String = membersToReturn.map { member =>
+        val response = fakeMemberService.getResponseFor(member)
+        val attributes = AttributeConverter.toAttributes(response, oldMode = true)
+        "returnType=" + requestType + 
+          "\nid=" + member.universityId + "\n" + 
+          attributes.map(_.productIterator.mkString("=")).mkString("\n")
+      }.mkString(separator)
+      Ok(body)
     }
   }
 
-  def respondToSentry(requestType: Int, user: Option[String]) = Action { implicit request =>
-    val formData = request.body.asFormUrlEncoded;
+  def respondToSentry() = Action { implicit request =>
+    val parameters = request.queryString
+    val formData = request.body.asFormUrlEncoded.getOrElse(Map.empty)
+    
+    def getValue(key: String): Seq[String] =
+      parameters.get(key)
+        .orElse(formData.get(key))
+        .getOrElse(Seq.empty)
+
+    val requestType: Int = try {
+      getValue("requestType").head.toInt
+    } catch {
+      case _: Exception =>
+        throw new Exception("requestType must be a valid integer")  
+    }
+    val users: Seq[String] = getValue("user")
+    val token: Option[String] = getValue("token").headOption
     
     requestType match {
-      case 1 if request.method == "POST" && formData.get("token").nonEmpty =>
-        sentryLookup("1", _.universityId == formData.get("token").head)
+      // token lookup (old-mode cookie)
+      case 1 if request.method == "POST" && token.isDefined =>
+        sentryLookup("1", _.universityId == token.get)
 
-      case 2 if request.method == "POST" && formData.get("user").nonEmpty && formData.get("pass").nonEmpty =>
-        sentryLookup("2", _.userCode == formData.get("user").head)
+      case 2 if request.method == "POST" && users.nonEmpty && getValue("pass").nonEmpty =>
+        sentryLookup("2", _.userCode == users.head)
 
-      case 4 if user.nonEmpty =>
-        sentryLookup("4", _.userCode == user.get)
+      // single user lookup
+      case 4 if users.nonEmpty =>
+        sentryLookup("4", _.userCode == users.head)
+
+      // multiple user lookup
+      case 5 if users.nonEmpty =>
+        sentryLookup("4", u => users.contains(u.userCode), true)
 
       case _ => BadRequest
     }

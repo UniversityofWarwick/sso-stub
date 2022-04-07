@@ -16,8 +16,8 @@ POST        /origin/hs                              @controllers.IndexController
 GET         /origin/slogin                          @controllers.IndexController.slogin(providerId, target)
 POST        /origin/slogin                          @controllers.IndexController.performOldMode(providerId, target)
 POST        /origin/aa                              @controllers.IndexController.respondToAa()
-GET         /origin/sentry                          @controllers.IndexController.respondToSentry(requestType: Int, user: Option[String])
-POST        /origin/sentry                          @controllers.IndexController.respondToSentry(requestType: Int, user: Option[String])
+GET         /origin/sentry                          @controllers.IndexController.respondToSentry
+POST        /origin/sentry                          @controllers.IndexController.respondToSentry
 
 ## Fallbacks ##
 

@@ -146,9 +146,7 @@ def excludeBadTransitiveDeps(mod: ModuleID): ModuleID = mod.excludeAll(
 unmanagedResourceDirectories in Assets += baseDirectory.value / "target/assets"
 
 resolvers += ("Local Maven Repository" at "file:///" + Path.userHome.absolutePath + "/.m2/repository")
-resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
 resolvers += "oauth" at "http://oauth.googlecode.com/svn/code/maven"
-resolvers += "softprops-maven" at "http://dl.bintray.com/content/softprops/maven"
 resolvers += "slack-client" at "https://mvnrepository.com/artifact/net.gpedro.integrations.slack/slack-webhook"
 resolvers += "SBT plugins" at "https://repo.scala-sbt.org/scalasbt/sbt-plugin-releases/"
 resolvers += "nexus" at "https://mvn.elab.warwick.ac.uk/nexus/repository/public-anonymous/"
