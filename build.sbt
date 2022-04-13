@@ -95,7 +95,7 @@ val appDeps = Seq(
   "xfire" % "opensaml" % "1.0.1",
   "xerces" % "xercesImpl" % "2.11.0",
   "org.apache.santuario" % "xmlsec" % "2.1.4",
-  "uk.co.halfninja" % "random-name-generator_2.12" % "0.3-warwick",
+  "uk.co.halfninja" % "random-name-generator_2.13" % "0.4-warwick",
 
   // Upgrade transitive dependency on Apache httpclient to remediate directory traversal
   // https://snyk.io/vuln/SNYK-JAVA-ORGAPACHEHTTPCOMPONENTS-31517

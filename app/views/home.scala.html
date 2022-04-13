@@ -19,6 +19,11 @@
 certificate in Java's keystore), but it's possible to use all HTTP or all HTTPS for these URLs - it doesn't really matter
 for local development.</p>
 
+        <p>You will also need to set the following properties (requires SSO Client 2.90 or later).</p>
+
+        <pre>userlookup.ssosUrl=http://localhost:8090/origin/sentry
+userlookup.requireHttps=false</pre>
+
         <h2>Staff</h2>
         <div class="columns">
         @for(grp <- staffMembers.groupBy(m => m.department.name).toSeq.sortBy((a) => a._1)) {
