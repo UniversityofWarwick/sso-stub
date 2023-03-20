@@ -38,3 +38,4 @@ node_modules
 !/.idea/play2*.xml
 *.code-workspace/
 .bloop
+/.bsp/

@@ -75,7 +75,7 @@
         <entry key="sso-stub">
           <value>
             <ProjectSettingsEntry>
-              <option name="playDistrPath" value="$USER_HOME$/.ivy2/cache/com.typesafe.play/play_2.13/jars/play_2.13-2.7.3.jar" />
+              <option name="playDistrPath" value="$MAVEN_REPOSITORY$/com/typesafe/play/play_2.13/2.7.3/play_2.13-2.7.3.jar" />
             </ProjectSettingsEntry>
           </value>
         </entry>
